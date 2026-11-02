@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.inkwell.Inkwell</id>
+  <launchable type="desktop-id">org.inkwell.Inkwell.desktop</launchable>
+  <name>Inkwell</name>
+  <summary>A writing desk with spelling and grammar</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <description>
+    <p>Inkwell is a writing desk. It underlines spelling, grammar, and style while you write, and it can export a book to PDF, EPUB, and Word.</p>
+  </description>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.1.0" date="2026-11-02"/>
+  </releases>
+</component>

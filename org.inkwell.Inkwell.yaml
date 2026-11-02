@@ -1,0 +1,32 @@
+app-id: org.inkwell.Inkwell
+runtime: org.kde.Platform
+runtime-version: "6.11"
+sdk: org.kde.Sdk
+command: inkwell
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --filesystem=xdg-documents
+modules:
+  - name: hunspell-en-us
+    buildsystem: simple
+    build-commands:
+      - install -Dm644 en_US.aff /app/share/hunspell/en_US.aff
+      - install -Dm644 en_US.dic /app/share/hunspell/en_US.dic
+      - install -Dm644 README_en_US.txt /app/share/doc/hunspell-en-US/README_en_US.txt
+    sources:
+      - type: dir
+        path: packaging/hunspell
+  - name: inkwell
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+    sources:
+      - type: dir
+        path: .
+        skip:
+          - build
+          - build-flatpak
+          - .flatpak-builder

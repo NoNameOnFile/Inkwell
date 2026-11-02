@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Inkwell
+GenericName=Writing Desk
+Comment=A writing desk with spelling and grammar
+Exec=inkwell %F
+Icon=org.inkwell.Inkwell
+Terminal=false
+Type=Application
+Categories=Office;
+MimeType=text/plain;text/markdown;
+Keywords=write;novel;spell;book;

@@ -1,0 +1,7 @@
+build/
+*.flatpak
+build-flatpak/
+.flatpak-builder/
+inkwell.conf
+*.o
+*.a
