@@ -2,10 +2,12 @@
 #include "grammar.hpp"
 #include "layout.hpp"
 #include "markup.hpp"
+#include "plugin.hpp"
 #include "spell.hpp"
 #include "text.hpp"
 #include "utf8.hpp"
 
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -178,6 +180,54 @@ void test_dictionary() {
     CHECK(typo);
 }
 
+void isolate_plugins() {
+    const auto dir = std::filesystem::temp_directory_path() / "inkwell-plugins-none";
+    std::filesystem::create_directories(dir);
+    setenv("INKWELL_PLUGINS", dir.c_str(), 1);
+    inkwell::reload_plugins();
+}
+
+void test_plugins() {
+    const auto dir = std::filesystem::temp_directory_path() / "inkwell-plugin-test";
+    std::filesystem::remove_all(dir);
+    std::filesystem::create_directories(dir);
+    const auto library = dir / "sample.so";
+    std::filesystem::copy_file(INKWELL_SAMPLE_PLUGIN, library);
+    std::ofstream broken(dir / "broken.so");
+    broken << "not a plugin";
+    broken.close();
+    std::ofstream note(dir / "readme.txt");
+    note << "ignored";
+    note.close();
+    setenv("INKWELL_PLUGINS", dir.c_str(), 1);
+    inkwell::reload_plugins();
+    const auto plugins = inkwell::loaded_plugins();
+    CHECK(plugins.size() == 1);
+    CHECK(plugins[0].id == "sample");
+    CHECK(plugins[0].name == "Sample");
+    CHECK(!inkwell::plugin_errors().empty());
+
+    inkwell::Dictionary dictionary;
+    std::string error;
+    CHECK(dictionary.load(error));
+    const std::string text = "A plugin-mark sits here.";
+    const auto issues = inkwell::analyze_document(text, dictionary);
+    bool found = false;
+    for (const inkwell::Issue& issue : issues) {
+        if (issue.end < issue.begin || issue.end > text.size()) {
+            continue;
+        }
+        const std::string word = text.substr(issue.begin, issue.end - issue.begin);
+        if (word == "plugin-mark" && issue.kind == inkwell::IssueKind::Style && issue.message == "Sample plugin" &&
+            !issue.replacements.empty() && issue.replacements.front() == "marked") {
+            found = true;
+        }
+    }
+    CHECK(found);
+    std::filesystem::remove_all(dir);
+    isolate_plugins();
+}
+
 void test_words() {
     const auto word = inkwell::word_touching("say recieve now", 6);
     CHECK(word.has_value());
@@ -223,10 +273,12 @@ void test_markup() {
 
 int main() {
     std::setlocale(LC_ALL, "");
+    isolate_plugins();
     test_utf8_and_wrap();
     test_editor();
     test_grammar();
     test_dictionary();
+    test_plugins();
     test_words();
     test_markup();
     if (g_failures != 0) {

@@ -112,3 +112,11 @@ Commands from Ctrl-P: `learn`, `ignore`, `save`, `open`, `copy`, `quit`.
 ## Dictionary
 
 `learn` and Edit → Add Name store a word in `~/.config/inkwell/personal.dic`. A capitalized word that is not one keystroke from a dictionary word is treated as a possible name. `ignore` hides a word until you quit. `INKWELL_DICT=en_GB` selects another dictionary in `/usr/share/hunspell`.
+
+## Plugins
+
+A plugin is a shared library that adds notes to the same list as spelling and grammar. Inkwell checks the plugins folder when it opens. Drop a `.so` file there and start Inkwell again.
+
+The folder is `~/.local/share/inkwell/plugins`. Inside the Flatpak it is `~/.var/app/org.inkwell.Inkwell/data/inkwell/plugins`. `INKWELL_PLUGINS` names one folder and, when set, is the only folder checked. An installed copy also looks beside the program, in `lib/inkwell/plugins`.
+
+`plugins/sample.cpp` is a plugin that marks the word `plugin-mark`. A plugin exports `inkwell_plugin` and returns the struct in `src/plugin.h`. `begin` and `end` are byte offsets on the page. `kind` is 0 for spelling, 1 for grammar, 2 for style, or 3 for a name. A replacement, when the plugin gives one, is what Apply offers. A library that does not export that symbol is skipped, and the status bar names the file.

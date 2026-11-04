@@ -19,6 +19,8 @@
 #include <QPushButton>
 #include <QTemporaryDir>
 
+#include <cstdlib>
+#include <filesystem>
 #include <iostream>
 #include <string>
 
@@ -32,6 +34,10 @@ int fail(const std::string& message) {
 }  // namespace
 
 int main(int argc, char** argv) {
+    const auto plugins = std::filesystem::temp_directory_path() / "inkwell-plugins-none";
+    std::filesystem::create_directories(plugins);
+    setenv("INKWELL_PLUGINS", plugins.c_str(), 1);
+
     QApplication app(argc, argv);
 
     const inkwell::DeskTheme classic = inkwell::deskTheme(inkwell::ThemeId::Classic, false);

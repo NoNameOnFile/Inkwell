@@ -3,6 +3,7 @@
 #include "editor.hpp"
 #include "grammar.hpp"
 #include "layout.hpp"
+#include "plugin.hpp"
 #include "spell.hpp"
 #include "term.hpp"
 #include "text.hpp"
@@ -1113,6 +1114,10 @@ int run_app(const std::string& path) {
             app.editor.set_path(path);
             app.status = "New file";
         }
+    }
+
+    for (const std::string& plugin_error : plugin_errors()) {
+        std::cerr << plugin_error << '\n';
     }
 
     Terminal terminal;

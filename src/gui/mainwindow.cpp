@@ -6,6 +6,7 @@
 #include "editorview.hpp"
 #include "markup.hpp"
 #include "grammar.hpp"
+#include "plugin.hpp"
 #include "spell.hpp"
 #include "text.hpp"
 #include "textmap.hpp"
@@ -1037,6 +1038,16 @@ void MainWindow::buildUi() {
     pushDetails();
     loadActive();
     showShelf();
+    const std::vector<std::string> plugin_problems = plugin_errors();
+    if (!plugin_problems.empty()) {
+        statusBar()->showMessage(QString::fromStdString(plugin_problems.front()));
+    } else if (!loaded_plugins().empty()) {
+        QStringList names;
+        for (const PluginInfo& plugin : loaded_plugins()) {
+            names.push_back(QString::fromStdString(plugin.name));
+        }
+        statusBar()->showMessage("Plugins: " + names.join(", "), 5000);
+    }
 }
 
 bool MainWindow::openFile(const QString& path) {

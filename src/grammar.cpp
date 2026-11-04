@@ -1,5 +1,6 @@
 #include "grammar.hpp"
 
+#include "plugin.hpp"
 #include "text.hpp"
 #include "utf8.hpp"
 
@@ -426,6 +427,7 @@ std::vector<Issue> analyze_document(const std::string& text, const Dictionary& d
             issues.push_back(std::move(issue));
         }
     }
+    append_plugin_issues(text, issues);
     std::sort(issues.begin(), issues.end(), [](const Issue& a, const Issue& b) { return a.begin < b.begin; });
     return issues;
 }

@@ -2,6 +2,7 @@
 
 #include "editor.hpp"
 #include "grammar.hpp"
+#include "plugin.hpp"
 #include "spell.hpp"
 #include "text.hpp"
 
@@ -55,6 +56,9 @@ int lint_paths(const std::vector<std::string>& paths) {
     if (paths.empty()) {
         std::cerr << "Name a file to check.\n";
         return 2;
+    }
+    for (const std::string& plugin_error : plugin_errors()) {
+        std::cerr << plugin_error << '\n';
     }
     Dictionary dictionary;
     std::string error;

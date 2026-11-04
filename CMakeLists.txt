@@ -15,9 +15,16 @@ add_library(inkwell_core
     src/grammar.cpp
     src/lint.cpp
     src/markup.cpp
+    src/plugin.cpp
 )
 target_include_directories(inkwell_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(inkwell_core PUBLIC ${CMAKE_DL_LIBS})
 target_compile_options(inkwell_core PRIVATE -Wall -Wextra -Wpedantic)
+
+add_library(inkwell_sample_plugin MODULE plugins/sample.cpp)
+target_include_directories(inkwell_sample_plugin PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set_target_properties(inkwell_sample_plugin PROPERTIES PREFIX "" OUTPUT_NAME sample)
+target_compile_options(inkwell_sample_plugin PRIVATE -Wall -Wextra -Wpedantic)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 find_package(ZLIB REQUIRED)
@@ -63,6 +70,8 @@ endif()
 add_executable(inkwell_tests tests/tests.cpp)
 target_link_libraries(inkwell_tests PRIVATE inkwell_core)
 target_compile_options(inkwell_tests PRIVATE -Wall -Wextra -Wpedantic)
+target_compile_definitions(inkwell_tests PRIVATE INKWELL_SAMPLE_PLUGIN="$<TARGET_FILE:inkwell_sample_plugin>")
+add_dependencies(inkwell_tests inkwell_sample_plugin)
 
 qt_add_executable(inkwell_gui_tests tests/gui_smoke.cpp)
 target_link_libraries(inkwell_gui_tests PRIVATE inkwell_gui)
