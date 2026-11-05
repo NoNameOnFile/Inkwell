@@ -27,6 +27,6 @@ static void analyze(const char* text, size_t length, void* user, InkwellPluginEm
 
 static const InkwellPlugin kPlugin = {INKWELL_PLUGIN_ABI, "sample", "Sample", analyze};
 
-extern "C" const InkwellPlugin* inkwell_plugin(void) {
+extern "C" INKWELL_PLUGIN_EXPORT const InkwellPlugin* inkwell_plugin(void) {
     return &kPlugin;
 }

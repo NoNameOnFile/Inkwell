@@ -9,6 +9,12 @@ extern "C" {
 
 #define INKWELL_PLUGIN_ABI 1
 
+#if defined(_WIN32)
+#define INKWELL_PLUGIN_EXPORT __declspec(dllexport)
+#else
+#define INKWELL_PLUGIN_EXPORT
+#endif
+
 enum {
     INKWELL_NOTE_SPELLING = 0,
     INKWELL_NOTE_GRAMMAR = 1,

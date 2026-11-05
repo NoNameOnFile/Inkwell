@@ -4,10 +4,21 @@
 #include <QApplication>
 #include <QString>
 
+#include <cstdio>
 #include <cstdlib>
 #include <iostream>
 #include <string>
 #include <vector>
+
+#if defined(_WIN32)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#endif
 
 namespace {
 
@@ -17,6 +28,37 @@ void print_usage() {
                  "  inkwell --check <file>  Print notes and exit\n"
                  "  inkwell-tui [file]      Open the terminal desk\n"
                  "  inkwell --help\n";
+}
+
+void attach_parent_console() {
+#if defined(_WIN32)
+    const HANDLE output = ::GetStdHandle(STD_OUTPUT_HANDLE);
+    if (output != nullptr && output != INVALID_HANDLE_VALUE) {
+        const DWORD kind = ::GetFileType(output);
+        if (kind == FILE_TYPE_DISK || kind == FILE_TYPE_PIPE || kind == FILE_TYPE_CHAR) {
+            return;
+        }
+    }
+    if (!::AttachConsole(ATTACH_PARENT_PROCESS)) {
+        return;
+    }
+    FILE* stream = nullptr;
+#if defined(_MSC_VER)
+    if (freopen_s(&stream, "CONOUT$", "w", stdout) == 0) {
+        std::cout.clear();
+    }
+    if (freopen_s(&stream, "CONOUT$", "w", stderr) == 0) {
+        std::cerr.clear();
+    }
+#else
+    if (std::freopen("CONOUT$", "w", stdout) != nullptr) {
+        std::cout.clear();
+    }
+    if (std::freopen("CONOUT$", "w", stderr) != nullptr) {
+        std::cerr.clear();
+    }
+#endif
+#endif
 }
 
 bool display_available() {
@@ -38,6 +80,7 @@ bool display_available() {
 }  // namespace
 
 int main(int argc, char** argv) {
+    attach_parent_console();
     std::vector<std::string> args;
     bool check = false;
     for (int i = 1; i < argc; ++i) {

@@ -7,6 +7,10 @@
 #include "text.hpp"
 #include "utf8.hpp"
 
+#include "inkwell_sample_plugin_path.h"
+#include "setenv.hpp"
+
+#include <clocale>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
@@ -183,7 +187,7 @@ void test_dictionary() {
 void isolate_plugins() {
     const auto dir = std::filesystem::temp_directory_path() / "inkwell-plugins-none";
     std::filesystem::create_directories(dir);
-    setenv("INKWELL_PLUGINS", dir.c_str(), 1);
+    set_env("INKWELL_PLUGINS", dir);
     inkwell::reload_plugins();
 }
 
@@ -191,15 +195,16 @@ void test_plugins() {
     const auto dir = std::filesystem::temp_directory_path() / "inkwell-plugin-test";
     std::filesystem::remove_all(dir);
     std::filesystem::create_directories(dir);
-    const auto library = dir / "sample.so";
-    std::filesystem::copy_file(INKWELL_SAMPLE_PLUGIN, library);
-    std::ofstream broken(dir / "broken.so");
+    const std::filesystem::path source{INKWELL_SAMPLE_PLUGIN};
+    const auto library = dir / ("sample" + source.extension().string());
+    std::filesystem::copy_file(source, library);
+    std::ofstream broken(dir / ("broken" + source.extension().string()));
     broken << "not a plugin";
     broken.close();
     std::ofstream note(dir / "readme.txt");
     note << "ignored";
     note.close();
-    setenv("INKWELL_PLUGINS", dir.c_str(), 1);
+    set_env("INKWELL_PLUGINS", dir);
     inkwell::reload_plugins();
     const auto plugins = inkwell::loaded_plugins();
     CHECK(plugins.size() == 1);
