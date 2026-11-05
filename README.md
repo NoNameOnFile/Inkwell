@@ -48,6 +48,8 @@ build\Release\inkwell.exe
 
 Spell check reads `hunspell\en_US.aff` and `en_US.dic` beside `inkwell.exe`, and the same pair under `%LOCALAPPDATA%\inkwell\hunspell`. The dictionary in `packaging/hunspell` can be copied to either folder. `INKWELL_DICT=en_GB` selects another dictionary in those folders. Plugins are `.dll` files in `%LOCALAPPDATA%\inkwell\plugins` or in `plugins` beside the executable.
 
+A Windows installer for GitHub Releases is described in `packaging/windows/README.md`. It stages `inkwell.exe`, the Qt runtime from `windeployqt`, and the Hunspell dictionary, then Inno Setup writes `dist/Inkwell-0.1.0-windows-x64.exe`.
+
 A Flatpak build uses the manifest in the project root. Run it from that directory, not from `build`:
 
 ```sh

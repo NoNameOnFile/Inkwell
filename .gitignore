@@ -1,4 +1,5 @@
 build/
+dist/*.exe
 *.flatpak
 build-flatpak/
 .flatpak-builder/
