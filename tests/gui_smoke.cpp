@@ -19,6 +19,8 @@
 #include <QPushButton>
 #include <QTemporaryDir>
 
+#include "setenv.hpp"
+
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
@@ -36,7 +38,7 @@ int fail(const std::string& message) {
 int main(int argc, char** argv) {
     const auto plugins = std::filesystem::temp_directory_path() / "inkwell-plugins-none";
     std::filesystem::create_directories(plugins);
-    setenv("INKWELL_PLUGINS", plugins.c_str(), 1);
+    set_env("INKWELL_PLUGINS", plugins);
 
     QApplication app(argc, argv);
 

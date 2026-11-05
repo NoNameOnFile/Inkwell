@@ -1,5 +1,7 @@
+#if !defined(_WIN32)
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 700
+#endif
 #endif
 
 #include "utf8.hpp"
@@ -101,6 +103,21 @@ void append_utf8(std::string& out, char32_t codepoint) {
     }
 }
 
+#if defined(_WIN32)
+static int fallback_codepoint_width(char32_t codepoint) {
+    // Windows has no wcwidth. ASCII is one column; East Asian wide and emoji are two.
+    if ((codepoint >= 0x1100 && codepoint <= 0x115F) || codepoint == 0x2329 || codepoint == 0x232A ||
+        (codepoint >= 0x2E80 && codepoint <= 0xA4CF && codepoint != 0x303F) ||
+        (codepoint >= 0xAC00 && codepoint <= 0xD7A3) || (codepoint >= 0xF900 && codepoint <= 0xFAFF) ||
+        (codepoint >= 0xFE10 && codepoint <= 0xFE19) || (codepoint >= 0xFE30 && codepoint <= 0xFE6F) ||
+        (codepoint >= 0xFF00 && codepoint <= 0xFF60) || (codepoint >= 0xFFE0 && codepoint <= 0xFFE6) ||
+        (codepoint >= 0x1F300 && codepoint <= 0x1FAFF) || (codepoint >= 0x20000 && codepoint <= 0x3FFFD)) {
+        return 2;
+    }
+    return 1;
+}
+#endif
+
 int codepoint_width(char32_t codepoint) {
     if (codepoint == 0 || codepoint == '\n' || codepoint == '\r') {
         return 0;
@@ -108,11 +125,15 @@ int codepoint_width(char32_t codepoint) {
     if (codepoint < 32 || (codepoint >= 0x7F && codepoint < 0xA0)) {
         return 0;
     }
+#if defined(_WIN32)
+    return fallback_codepoint_width(codepoint);
+#else
     const int width = ::wcwidth(static_cast<wchar_t>(codepoint));
     if (width < 0) {
         return 1;
     }
     return width;
+#endif
 }
 
 int string_width(std::string_view text) {

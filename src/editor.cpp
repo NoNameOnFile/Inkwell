@@ -3,6 +3,7 @@
 #include "utf8.hpp"
 
 #include <cctype>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 
@@ -484,7 +485,7 @@ void Editor::redo() {
 }
 
 bool Editor::load_file(const std::string& file, std::string& error) {
-    std::ifstream in(file, std::ios::binary);
+    std::ifstream in(std::filesystem::path(file), std::ios::binary);
     if (!in) {
         error = "Could not open " + file;
         return false;
@@ -505,7 +506,7 @@ bool Editor::load_file(const std::string& file, std::string& error) {
 }
 
 bool Editor::save_file(const std::string& file, std::string& error) {
-    std::ofstream out(file, std::ios::binary);
+    std::ofstream out(std::filesystem::path(file), std::ios::binary);
     if (!out) {
         error = "Could not write " + file;
         return false;

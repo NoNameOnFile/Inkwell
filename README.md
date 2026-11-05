@@ -26,7 +26,27 @@ Review a file without opening either desk:
 ./build/inkwell --check draft.txt
 ```
 
-The same `--check` switch works on `inkwell-tui`. Qt is the Linux dependency used here, and the same Widgets project is what you compile on Windows and macOS. This tree has been built on Linux.
+The same `--check` switch works on `inkwell-tui`. Qt 6 Widgets is the dependency. The same project builds on Windows and macOS. This tree has been built on Linux.
+
+### Windows (MSVC)
+
+Use Visual Studio 2022, Qt 6 Widgets, and Ninja from the x64 Native Tools Command Prompt so `cl` is on `PATH`. `CMAKE_PREFIX_PATH` is the MSVC kit directory, the folder that contains `lib\cmake\Qt6`. CMake downloads zlib 1.4 when it is not already installed. The terminal desk is Unix-only.
+
+```bat
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=C:\Qt\6.8.3\msvc2022_64
+cmake --build build
+build\inkwell.exe
+```
+
+The Visual Studio generator is multi-config, so pick Release at build time:
+
+```bat
+cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH=C:\Qt\6.8.3\msvc2022_64
+cmake --build build --config Release
+build\Release\inkwell.exe
+```
+
+Spell check reads `hunspell\en_US.aff` and `en_US.dic` beside `inkwell.exe`, and the same pair under `%LOCALAPPDATA%\inkwell\hunspell`. The dictionary in `packaging/hunspell` can be copied to either folder. `INKWELL_DICT=en_GB` selects another dictionary in those folders. Plugins are `.dll` files in `%LOCALAPPDATA%\inkwell\plugins` or in `plugins` beside the executable.
 
 A Flatpak build uses the manifest in the project root. Run it from that directory, not from `build`:
 
@@ -111,12 +131,12 @@ Commands from Ctrl-P: `learn`, `ignore`, `save`, `open`, `copy`, `quit`.
 
 ## Dictionary
 
-`learn` and Edit → Add Name store a word in `~/.config/inkwell/personal.dic`. A capitalized word that is not one keystroke from a dictionary word is treated as a possible name. `ignore` hides a word until you quit. `INKWELL_DICT=en_GB` selects another dictionary in `/usr/share/hunspell`.
+`learn` and Edit → Add Name store a word in `~/.config/inkwell/personal.dic`. On Windows that file is `%LOCALAPPDATA%\inkwell\personal.dic`. A capitalized word that is not one keystroke from a dictionary word is treated as a possible name. `ignore` hides a word until you quit. `INKWELL_DICT=en_GB` selects another dictionary in `/usr/share/hunspell`, or in the Windows folders named above.
 
 ## Plugins
 
-A plugin is a shared library that adds notes to the same list as spelling and grammar. Inkwell checks the plugins folder when it opens. Drop a `.so` file there and start Inkwell again.
+A plugin is a shared library that adds notes to the same list as spelling and grammar. Inkwell checks the plugins folder when it opens. Drop a `.so` file there and start Inkwell again. On Windows the file is a `.dll`, and `inkwell_plugin` is marked with `INKWELL_PLUGIN_EXPORT`.
 
-The folder is `~/.local/share/inkwell/plugins`. Inside the Flatpak it is `~/.var/app/org.inkwell.Inkwell/data/inkwell/plugins`. `INKWELL_PLUGINS` names one folder and, when set, is the only folder checked. An installed copy also looks beside the program, in `lib/inkwell/plugins`.
+The folder is `~/.local/share/inkwell/plugins`. Inside the Flatpak it is `~/.var/app/org.inkwell.Inkwell/data/inkwell/plugins`. On Windows it is `%LOCALAPPDATA%\inkwell\plugins`. `INKWELL_PLUGINS` names one folder and, when set, is the only folder checked. An installed copy also looks beside the program, in `lib/inkwell/plugins`, and on Windows in a `plugins` folder next to the executable.
 
 `plugins/sample.cpp` is a plugin that marks the word `plugin-mark`. A plugin exports `inkwell_plugin` and returns the struct in `src/plugin.h`. `begin` and `end` are byte offsets on the page. `kind` is 0 for spelling, 1 for grammar, 2 for style, or 3 for a name. A replacement, when the plugin gives one, is what Apply offers. A library that does not export that symbol is skipped, and the status bar names the file.

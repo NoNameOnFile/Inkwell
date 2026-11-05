@@ -1,5 +1,8 @@
 #include "spell.hpp"
 
+#if defined(_WIN32)
+#include "hostpath.hpp"
+#endif
 #include "text.hpp"
 #include "utf8.hpp"
 
@@ -291,8 +294,60 @@ void add_dict_base(std::vector<std::string>& candidates, const std::string& base
     }
 }
 
+#if defined(_WIN32)
+void add_windows_dict_roots(std::vector<std::filesystem::path>& roots) {
+    const std::filesystem::path executable = executable_path();
+    if (!executable.empty()) {
+        const std::filesystem::path bindir = executable.parent_path();
+        roots.push_back(bindir / "hunspell");
+        roots.push_back(bindir);
+    }
+    if (const char* local = std::getenv("LOCALAPPDATA")) {
+        if (local[0] != '\0') {
+            roots.push_back(std::filesystem::path(local) / "inkwell" / "hunspell");
+        }
+    } else if (const char* roaming = std::getenv("APPDATA")) {
+        if (roaming[0] != '\0') {
+            roots.push_back(std::filesystem::path(roaming) / "inkwell" / "hunspell");
+        }
+    }
+}
+
+void add_named_dicts(std::vector<std::string>& candidates, const std::vector<std::filesystem::path>& roots, const std::string& name) {
+    if (name.empty()) {
+        return;
+    }
+    for (const std::filesystem::path& root : roots) {
+        add_dict_base(candidates, (root / name).string());
+    }
+}
+#endif
+
 std::optional<std::pair<std::string, std::string>> find_dict_files(std::string& error) {
     std::vector<std::string> candidates;
+    std::string missing = "No Hunspell dictionary found. Expected /usr/share/hunspell/en_US.aff and en_US.dic.";
+#if defined(_WIN32)
+    missing = "No Hunspell dictionary found. Expected hunspell\\en_US.aff and en_US.dic beside the program, "
+              "or %LOCALAPPDATA%\\inkwell\\hunspell\\en_US.aff and en_US.dic.";
+    std::string preferred;
+    if (const char* env = std::getenv("INKWELL_DICT")) {
+        const std::string value(env);
+        if (!value.empty()) {
+            if (value.find('/') != std::string::npos || value.find('\\') != std::string::npos) {
+                candidates.push_back(value);
+            } else {
+                preferred = value;
+            }
+        }
+    }
+    std::vector<std::filesystem::path> roots;
+    add_windows_dict_roots(roots);
+    if (!preferred.empty()) {
+        add_named_dicts(candidates, roots, preferred);
+    }
+    add_named_dicts(candidates, roots, "en_US");
+    add_named_dicts(candidates, roots, "en_GB");
+#else
     if (const char* env = std::getenv("INKWELL_DICT")) {
         if (std::string(env).find('/') == std::string::npos) {
             candidates.push_back(std::string("/usr/share/hunspell/") + env);
@@ -316,6 +371,7 @@ std::optional<std::pair<std::string, std::string>> find_dict_files(std::string& 
     candidates.emplace_back("/app/share/hunspell/en_US");
     candidates.emplace_back("/usr/share/hunspell/en_US");
     candidates.emplace_back("/usr/share/hunspell/en_GB");
+#endif
     for (const std::string& base : candidates) {
         namespace fs = std::filesystem;
         std::string aff = base + ".aff";
@@ -331,14 +387,27 @@ std::optional<std::pair<std::string, std::string>> find_dict_files(std::string& 
             return std::make_pair(aff, dic);
         }
     }
-    error = "No Hunspell dictionary found. Expected /usr/share/hunspell/en_US.aff and en_US.dic.";
+    error = std::move(missing);
     return std::nullopt;
 }
 
 std::string personal_path() {
+#if defined(_WIN32)
+    if (const char* local = std::getenv("LOCALAPPDATA")) {
+        if (local[0] != '\0') {
+            return (std::filesystem::path(local) / "inkwell" / "personal.dic").string();
+        }
+    }
+    if (const char* roaming = std::getenv("APPDATA")) {
+        if (roaming[0] != '\0') {
+            return (std::filesystem::path(roaming) / "inkwell" / "personal.dic").string();
+        }
+    }
+#else
     if (const char* home = std::getenv("HOME")) {
         return std::string(home) + "/.config/inkwell/personal.dic";
     }
+#endif
     return "inkwell-personal.dic";
 }
 
@@ -426,7 +495,7 @@ bool Dictionary::load(std::string& error) {
     if (!paths) {
         return false;
     }
-    std::ifstream aff_in(paths->first);
+    std::ifstream aff_in{std::filesystem::path(paths->first)};
     if (!aff_in) {
         error = "Could not read " + paths->first;
         return false;
@@ -491,7 +560,7 @@ bool Dictionary::load(std::string& error) {
         }
     }
 
-    std::ifstream dic_in(paths->second);
+    std::ifstream dic_in{std::filesystem::path(paths->second)};
     if (!dic_in) {
         error = "Could not read " + paths->second;
         return false;
@@ -571,7 +640,7 @@ bool Dictionary::load(std::string& error) {
     }
 
     personal_path_ = personal_path();
-    std::ifstream personal(personal_path_);
+    std::ifstream personal{std::filesystem::path(personal_path_)};
     if (personal) {
         std::string word;
         while (std::getline(personal, word)) {
