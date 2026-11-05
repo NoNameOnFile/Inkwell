@@ -106,8 +106,11 @@ target_include_directories(inkwell_gui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src/gu
 target_link_libraries(inkwell_gui PUBLIC inkwell_core Qt6::Widgets ZLIB::ZLIB)
 inkwell_warnings(inkwell_gui)
 
-qt_add_executable(inkwell src/gui/main.cpp)
+qt_add_executable(inkwell WIN32 src/gui/main.cpp)
 target_link_libraries(inkwell PRIVATE inkwell_gui)
+if(WIN32)
+    set_target_properties(inkwell PROPERTIES WIN32_EXECUTABLE TRUE)
+endif()
 inkwell_warnings(inkwell)
 
 if(UNIX)
