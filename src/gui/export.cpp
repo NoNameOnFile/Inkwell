@@ -15,6 +15,7 @@
 #include <QPdfWriter>
 #include <QPageLayout>
 #include <QPageSize>
+#include <QtGlobal>
 #include <QSaveFile>
 #include <QTextBlockFormat>
 #include <QTextCharFormat>
@@ -915,9 +916,11 @@ bool export_pdf(const ExportRequest& request, const PageSettings& page, const st
         QPdfWriter writer(&buffer);
         writer.setTitle(request.details.title);
         writer.setCreator("Inkwell");
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
         if (!request.details.author.trimmed().isEmpty()) {
             writer.setAuthor(request.details.author.trimmed());
         }
+#endif
         const BoundBook bound = bound_book(request);
         writer.setResolution(72);
         writer.setPageSize(QPageSize(QSizeF(bound.width, bound.height), QPageSize::Inch));
